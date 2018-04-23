@@ -1,6 +1,6 @@
 name:                lastfm-summary
 version:             0.1.0.0
-github:              "githubuser/lastfm-summary"
+# github:              "githubuser/lastfm-summary"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"

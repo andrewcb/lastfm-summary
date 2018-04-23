@@ -17,8 +17,26 @@ import Data.Aeson.Types
 appName :: String
 appName = "lastfm-summary"
 
-topArtistsURL :: String -> String -> String
-topArtistsURL username apiKey = "http://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=" ++ username ++ "&api_key=" ++ apiKey ++ "&format=json&period=7day&limit=5"
+-- Last.fm API
+
+data TopArtistsPeriod = Overall | P7Day | P1Month | P3Month | P6Month | P12Month deriving (Eq)
+
+instance Show TopArtistsPeriod where
+	show period = case period of 
+		Overall -> "overall"
+		P7Day -> "7day"
+		P1Month -> "1month"
+		P3Month -> "3month"
+		P6Month -> "6month"
+		P12Month -> "12month"
+
+-- The request type
+data LastFMRequest = UserTopArtists { user :: String, period :: TopArtistsPeriod, limit :: Int }
+
+lastFMAPIBase = "http://ws.audioscrobbler.com/2.0/"
+
+lastFMRequestURL :: String -> LastFMRequest -> String
+lastFMRequestURL apiKey (UserTopArtists user period limit) = lastFMAPIBase ++ "?method=user.gettopartists&user=" ++ user ++ "&api_key=" ++ apiKey ++ "&format=json&period=" ++ (show period) ++ "&limit=" ++ (show limit)
 
 -- ConfigFile
 
@@ -91,7 +109,7 @@ main = do
 	case rv of
 		Nothing -> return ()
 		Just (username, apiKey) -> do
-			let url = topArtistsURL username apiKey
+			let url = lastFMRequestURL apiKey $ UserTopArtists username P7Day 5
 			j <- simpleHttp url
 			let val = decode j
 			let m = val >>= parseMaybe topArtistsResponse
