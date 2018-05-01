@@ -12,7 +12,7 @@ import Data.Either.Utils
 import Data.String.Utils (replace)
 import Control.Monad.Error
 import System.Directory
-import Text.Read -- readMaybe
+import Text.Read (readMaybe) -- readMaybe
 import Data.Aeson
 import Data.Aeson.Types
 
@@ -48,7 +48,14 @@ makeReport topArtists = "Top last.fm artists of the past week: " ++ body
 		body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
 		asString (ArtistRecord name count) = name ++ " (" ++ (show count) ++ ")"
 
-main :: IO ()
+
+
+urlDataToReport :: B.ByteString -> Maybe String
+urlDataToReport j = do
+	d <- decode j
+	ar <- parseMaybe topArtistsResponse d
+	return $ makeReport ar
+
 
 main = do
 	rv <- Config.getConfig -- IO (Maybe (String String))
@@ -57,11 +64,7 @@ main = do
 		Just (username, apiKey) -> do
 			let url = LastFM.requestURL apiKey $ LastFM.UserTopArtists username LastFM.P7Day 5
 			j <- simpleHttp url
-			--let val = decode j
-			let m = (decode j) >>= parseMaybe topArtistsResponse
-			--putStrLn $ show m
-			putStrLn $ case m of 
-				Just ar -> makeReport ar
-				Nothing -> "Nothing to report"
-			--putStrLn $ fmap makeReport m
-
+			putStrLn $ maybe "Nothing to report" id (urlDataToReport j)
+			--putStrLn $ case (urlDataToReport j) of
+			--	Just r -> r
+			--	Nothing -> "Nothing to report"
