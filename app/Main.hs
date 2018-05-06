@@ -11,6 +11,7 @@ import qualified Data.ConfigFile as CF
 import Data.Either.Utils
 import Data.String.Utils (replace)
 import Control.Monad.Error
+import Control.Monad.Trans.Maybe
 import System.Directory
 import Text.Read (readMaybe) -- readMaybe
 import Data.Aeson
@@ -57,14 +58,16 @@ urlDataToReport j = do
 	return $ makeReport ar
 
 
+--  an attempt to reimplement main with maybeT
+
+getReport :: MaybeT IO String
+getReport = do
+	config <- MaybeT $ Config.getConfig
+	let url = LastFM.requestURL (lastAPIKey config) $ LastFM.UserTopArtists (lastUsername config) LastFM.P1Month 10
+	j <- liftIO $ simpleHttp url
+	return $ urlDataToReport j
+
+main :: IO ()
 main = do
-	rv <- Config.getConfig -- IO (Maybe (String String))
-	case rv of
-		Nothing -> return ()
-		Just (username, apiKey) -> do
-			let url = LastFM.requestURL apiKey $ LastFM.UserTopArtists username LastFM.P7Day 5
-			j <- simpleHttp url
-			putStrLn $ maybe "Nothing to report" id (urlDataToReport j)
-			--putStrLn $ case (urlDataToReport j) of
-			--	Just r -> r
-			--	Nothing -> "Nothing to report"
+	r <- runMaybeT getReport
+	putStrLn $ maybe "Nothing to report" id r

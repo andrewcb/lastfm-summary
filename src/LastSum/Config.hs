@@ -5,6 +5,8 @@ import System.Directory
 import qualified Data.ConfigFile as CF
 import Control.Monad.Error
 
+data Config = Config { lastUsername :: String, lastAPIKey :: String  }
+
 appName :: String
 appName = "lastfm-summary"
 
@@ -19,7 +21,7 @@ configName = fmap (\d -> d ++ "/config") $ getAppUserDataDirectory appName
 
 -- TODO: make this return an Either
 --getConfig :: Error e => IO (Either e (String, String))
-getConfig :: IO (Maybe (String, String))
+getConfig :: IO (Maybe Config)
 getConfig = do
 	configFileName <- configName
 
@@ -30,8 +32,8 @@ getConfig = do
 			--return $ (\a b -> (a,b)) <$> (CF.get x "DEFAULT" "username") <*> (CF.get x "DEFAULT" "api_key")
  			username <- CF.get x "DEFAULT" "username"
 			apiKey <- CF.get x "DEFAULT" "api_key"
-			return (username, apiKey)
+			return $ Config username apiKey
 	--return rv
 	return $ case rv of
 		Left _ -> Nothing
-		Right (a, b) -> Just (a, b)
+		Right cfg -> Just cfg
