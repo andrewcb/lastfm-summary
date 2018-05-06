@@ -63,7 +63,7 @@ urlDataToReport j = do
 getReport :: MaybeT IO String
 getReport = do
 	config <- MaybeT $ Config.getConfig
-	let url = LastFM.requestURL (lastAPIKey config) $ LastFM.UserTopArtists (lastUsername config) LastFM.P1Month 10
+	let url = LastFM.requestURL (config.lastAPIKey config) $ LastFM.UserTopArtists (config.lastUsername config) LastFM.P7Day 5
 	j <- liftIO $ simpleHttp url
 	return $ urlDataToReport j
 
