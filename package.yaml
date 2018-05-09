@@ -29,6 +29,8 @@ dependencies:
 - ConfigFile
 - mtl
 - MissingH
+- optparse-applicative
+
 
 library:
   source-dirs: src

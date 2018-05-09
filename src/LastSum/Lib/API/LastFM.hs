@@ -15,10 +15,15 @@ instance Show TopArtistsPeriod where
 
 parseTopArtistsPeriod :: String -> Maybe TopArtistsPeriod
 parseTopArtistsPeriod "overall" = Just Overall
-parseTopArtistsPeriod "weekly" = Just P7Day
-parseTopArtistsPeriod "week" = Just P7Day
-parseTopArtistsPeriod "monthly" = Just P1Month
-parseTopArtistsPeriod "month" = Just P1Month
+parseTopArtistsPeriod ('7':'d':_) = Just P7Day
+parseTopArtistsPeriod ('w':'e':'e':'k':_) = Just P7Day
+parseTopArtistsPeriod ('1':'w':_) = Just P7Day
+parseTopArtistsPeriod ('m':'o':'n':_) = Just P1Month
+parseTopArtistsPeriod ('1':'m':_) = Just P1Month
+parseTopArtistsPeriod ('3':'m':_) = Just P3Month
+parseTopArtistsPeriod ('6':'m':_) = Just P6Month
+parseTopArtistsPeriod ('1':'2':'m':_) = Just P12Month
+parseTopArtistsPeriod ('1':'y':_) = Just P12Month
 parseTopArtistsPeriod _ = Nothing
 -- TODO: add more
 

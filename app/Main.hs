@@ -12,11 +12,39 @@ import Data.Either.Utils
 import Data.String.Utils (replace)
 import Control.Monad.Error
 import Control.Monad.Trans.Maybe
+import qualified Options.Applicative as OPT
+import Data.Semigroup ((<>))
 import System.Directory
 import Text.Read (readMaybe) -- readMaybe
 import Data.Aeson
 import Data.Aeson.Types
 
+-- command line options
+
+data CommandLineOptions = CommandLineOptions {
+    optPeriod :: LastFM.TopArtistsPeriod,
+    optLimit :: Int
+} deriving Show
+
+parsePeriod :: OPT.ReadM LastFM.TopArtistsPeriod
+parsePeriod = OPT.eitherReader $ \s -> case LastFM.parseTopArtistsPeriod s of
+    Just p -> Right p
+    Nothing -> Left "Invalid period specified"
+
+commandLineParser :: OPT.Parser CommandLineOptions
+commandLineParser = CommandLineOptions
+    <$> OPT.option parsePeriod  ( 
+        OPT.long "period" 
+        <> OPT.short 'p' 
+        <> OPT.help "period of report"
+        <> OPT.value LastFM.P7Day )
+    <*> OPT.option OPT.auto (
+        OPT.long "limit"
+        <> OPT.short 'l'
+        <> OPT.help "number of entries to list"
+        <> OPT.metavar "N"
+        <> OPT.value 5
+        <> OPT.showDefault )
 
 -- JSON parsing
 
@@ -74,8 +102,17 @@ getReport spec = do
 
 -- 
 
+main' :: CommandLineOptions -> IO ()
+main' opts@(CommandLineOptions period limit) = do
+    --putStrLn $ show opts
+    let reportSpec = TopArtistsReport period limit
+    r <- runMaybeT $ getReport reportSpec
+    putStrLn $ maybe "Nothing to report" id r
+
 main :: IO ()
-main = do
-	let reportSpec = TopArtistsReport LastFM.P7Day 5
-	r <- runMaybeT $ getReport reportSpec
-	putStrLn $ maybe "Nothing to report" id r
+main = main' =<< OPT.execParser opts
+    where
+        opts = OPT.info (commandLineParser OPT.<**> OPT.helper)
+            ( OPT.fullDesc 
+                <> OPT.progDesc "produce a report from last.fm user listening data"
+                <> OPT.header "lastfm-summary" )
