@@ -12,6 +12,17 @@ instance Show TopArtistsPeriod where
         P6Month -> "6month"
         P12Month -> "12month"
 
+
+parseTopArtistsPeriod :: String -> Maybe TopArtistsPeriod
+parseTopArtistsPeriod "overall" = Just Overall
+parseTopArtistsPeriod "weekly" = Just P7Day
+parseTopArtistsPeriod "week" = Just P7Day
+parseTopArtistsPeriod "monthly" = Just P1Month
+parseTopArtistsPeriod "month" = Just P1Month
+parseTopArtistsPeriod _ = Nothing
+-- TODO: add more
+
+
 -- The request type
 data Request = UserTopArtists { user :: String, period :: TopArtistsPeriod, limit :: Int }
 

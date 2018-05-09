@@ -43,8 +43,8 @@ instance FromJSON ArtistRecord where
 			Nothing -> fail "No well-formed playcount"
 --
 
-makeReport :: [ArtistRecord] -> String
-makeReport topArtists = "Top last.fm artists of the past week: " ++ body
+makeReport :: String -> [ArtistRecord] -> String
+makeReport banner topArtists = banner ++ body
 	where
 		body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
 		asString (ArtistRecord name count) = name ++ " (" ++ (show count) ++ ")"
@@ -55,19 +55,27 @@ urlDataToReport :: B.ByteString -> Maybe String
 urlDataToReport j = do
 	d <- decode j
 	ar <- parseMaybe topArtistsResponse d
-	return $ makeReport ar
+	return $ makeReport "Top last.fm artists of the past week: " ar
 
 
 --  an attempt to reimplement main with maybeT
 
-getReport :: MaybeT IO String
-getReport = do
+data ReportSpec = TopArtistsReport LastFM.TopArtistsPeriod Int
+
+getReport :: ReportSpec -> MaybeT IO String
+getReport spec = do
+
 	config <- MaybeT $ Config.getConfig
-	let url = LastFM.requestURL (Config.lastAPIKey config) $ LastFM.UserTopArtists (Config.lastUsername config) LastFM.P7Day 5
+	let request = case spec of 
+		TopArtistsReport period limit -> LastFM.UserTopArtists (Config.lastUsername config) period limit
+	let url = LastFM.requestURL (Config.lastAPIKey config) request
 	j <- liftIO $ simpleHttp url
 	MaybeT $ return $ urlDataToReport j
 
+-- 
+
 main :: IO ()
 main = do
-	r <- runMaybeT getReport
+	let reportSpec = TopArtistsReport LastFM.P7Day 5
+	r <- runMaybeT $ getReport reportSpec
 	putStrLn $ maybe "Nothing to report" id r
