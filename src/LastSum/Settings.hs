@@ -16,10 +16,15 @@ data Settings = Settings {
     reportLimit :: Int
 }
 
+-- Swift-like ?? operator, for convenience
+infixr 4 ??
+(??) :: Maybe a -> a -> a
+(??) a b = maybe b id a
+
 getSettings :: IO (Either String Settings)
 getSettings = do
     eitherCF <- SF.getConfig
     cl <- SL.getOptions
     return $ flip fmap eitherCF (\cf ->
-        let lastUsername = maybe (SF.lastUsername cf) id (SL.lastUsername cl)
+        let lastUsername = SL.lastUsername cl ?? SF.lastUsername cf
         in Settings lastUsername (SF.lastAPIKey cf) (SL.period cl) (SL.limit cl))

@@ -12,6 +12,14 @@ instance Show TopArtistsPeriod where
         P6Month -> "6month"
         P12Month -> "12month"
 
+descriptiveName :: TopArtistsPeriod -> String
+descriptiveName Overall = "all time"
+descriptiveName P7Day = "the past week"
+descriptiveName P1Month = "the past month"
+descriptiveName P3Month = "the past 3 months"
+descriptiveName P6Month = "the past 6 months"
+descriptiveName P12Month = "the past year"
+-- TODO: investigate localisation
 
 parseTopArtistsPeriod :: String -> Maybe TopArtistsPeriod
 parseTopArtistsPeriod "overall" = Just Overall

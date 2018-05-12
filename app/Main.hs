@@ -12,8 +12,7 @@ import Data.Either.Utils
 import Data.String.Utils (replace)
 import Control.Monad.Except
 import Control.Monad.Trans.Maybe
---import System.Directory
-import Text.Read (readMaybe) -- readMaybe
+import Text.Read (readMaybe)
 import Data.Aeson
 import Data.Aeson.Types
 
@@ -34,7 +33,6 @@ topArtistsResponse = withObject "topartists" $ \o -> do
     return artists :: Parser [ArtistRecord]
 
 instance FromJSON ArtistRecord where
-    --parseJSON = withObject "artistRecord" $ \o -> ArtistRecord <$> o .: "name" <*> (readMaybe (o .: "playcount")) :: Int
     parseJSON = withObject "artistRecord" $ \o -> do
         name <- o .: "name"
         countStr <- o .: "playcount"
@@ -51,11 +49,11 @@ makeReport banner topArtists = banner ++ body
 
 
 
-urlDataToReport :: B.ByteString -> Maybe String
-urlDataToReport j = do
+urlDataToReport :: String -> B.ByteString -> Maybe String
+urlDataToReport banner j = do
     d <- decode j
     ar <- parseMaybe topArtistsResponse d
-    return $ makeReport "Top last.fm artists of the past week: " ar
+    return $ makeReport banner ar
 
 
 --  an attempt to reimplement main with maybeT
@@ -68,12 +66,15 @@ specFromSettings settings = TopArtistsReport (Settings.lastUsername settings) (S
 specToRequest :: ReportSpec -> LastFM.Request
 specToRequest (TopArtistsReport u p l) = LastFM.UserTopArtists u p l
 
+specToBanner :: ReportSpec -> String
+specToBanner (TopArtistsReport u p l) = "Top last.fm artists of " ++ LastFM.descriptiveName p ++ ": "
+
 getReport :: Settings.Settings -> ReportSpec -> MaybeT IO String
 getReport settings spec = do
     --config <- MaybeT $ Config.getConfig
     let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest spec
     j <- liftIO $ simpleHttp url
-    MaybeT $ return $ urlDataToReport j
+    MaybeT $ return $ urlDataToReport (specToBanner spec) j
 
 -- 
 
