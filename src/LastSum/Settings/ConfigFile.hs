@@ -26,7 +26,7 @@ getMaybe cp sect opt = do
             Left _ -> Nothing
 
 -- TODO: make this return an Either
-getConfig :: IO (Maybe Config)
+getConfig :: IO (Either String Config)
 getConfig = do
     configFileName <- configName
 
@@ -43,5 +43,5 @@ getConfig = do
             return $ Config username apiKey
     --return rv
     return $ case rv of
-        Left _ -> Nothing
-        Right cfg -> Just cfg
+        Left err -> Left $ show err
+        Right cfg -> Right cfg

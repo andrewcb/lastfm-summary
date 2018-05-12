@@ -82,7 +82,7 @@ main :: IO ()
 main = do
     s <- Settings.getSettings
     case s of 
-        Nothing -> putStrLn "No config file exists" -- FIXME
-        Just settings -> do
+        Left err -> putStrLn err
+        Right settings -> do
             r <- runMaybeT $ getReport settings (specFromSettings settings)
             putStrLn $ maybe "Nothing to report" id r
