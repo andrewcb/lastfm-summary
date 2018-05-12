@@ -7,8 +7,9 @@ import Data.Semigroup ((<>))
 
 
 data CommandLineOptions = CommandLineOptions {
-    optPeriod :: LastFM.TopArtistsPeriod,
-    optLimit :: Int
+    lastUsername :: Maybe String,
+    period :: LastFM.TopArtistsPeriod,
+    limit :: Int
 } deriving Show
 
 parsePeriod :: OPT.ReadM LastFM.TopArtistsPeriod
@@ -18,7 +19,13 @@ parsePeriod = OPT.eitherReader $ \s -> case LastFM.parseTopArtistsPeriod s of
 
 commandLineParser :: OPT.Parser CommandLineOptions
 commandLineParser = CommandLineOptions
-    <$> OPT.option parsePeriod  ( 
+    <$> OPT.option (OPT.maybeReader (\s -> Just $ Just s)) (
+        OPT.long "last-username"
+        <> OPT.short 'u'
+        <> OPT.help "last.fm username to examine"
+        <> OPT.value Nothing
+        )
+    <*> OPT.option parsePeriod (
         OPT.long "period" 
         <> OPT.short 'p' 
         <> OPT.help "period of report"

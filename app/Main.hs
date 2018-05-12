@@ -60,19 +60,18 @@ urlDataToReport j = do
 
 --  an attempt to reimplement main with maybeT
 
--- TODO: move username to here
-data ReportSpec = TopArtistsReport LastFM.TopArtistsPeriod Int
+data ReportSpec = TopArtistsReport String LastFM.TopArtistsPeriod Int
 
 specFromSettings :: Settings.Settings -> ReportSpec
-specFromSettings settings = TopArtistsReport (Settings.reportPeriod settings) (Settings.reportLimit settings)
+specFromSettings settings = TopArtistsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)
 
-specToRequest :: Settings.Settings -> ReportSpec -> LastFM.Request
-specToRequest settings (TopArtistsReport p l) = LastFM.UserTopArtists (Settings.lastUsername settings) p l
+specToRequest :: ReportSpec -> LastFM.Request
+specToRequest (TopArtistsReport u p l) = LastFM.UserTopArtists u p l
 
 getReport :: Settings.Settings -> ReportSpec -> MaybeT IO String
 getReport settings spec = do
     --config <- MaybeT $ Config.getConfig
-    let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest settings spec
+    let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest spec
     j <- liftIO $ simpleHttp url
     MaybeT $ return $ urlDataToReport j
 
