@@ -58,7 +58,7 @@ urlDataToReport banner j = do
 
 --  an attempt to reimplement main with maybeT
 
-data ReportSpec = TopArtistsReport String LastFM.TopArtistsPeriod Int
+data ReportSpec = TopArtistsReport String LastFM.RetroPeriod Int
 
 specFromSettings :: Settings.Settings -> ReportSpec
 specFromSettings settings = TopArtistsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)

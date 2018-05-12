@@ -8,12 +8,12 @@ import Data.Semigroup ((<>))
 
 data CommandLineOptions = CommandLineOptions {
     lastUsername :: Maybe String,
-    period :: LastFM.TopArtistsPeriod,
+    period :: LastFM.RetroPeriod,
     limit :: Int
 } deriving Show
 
-parsePeriod :: OPT.ReadM LastFM.TopArtistsPeriod
-parsePeriod = OPT.eitherReader $ \s -> case LastFM.parseTopArtistsPeriod s of
+parsePeriod :: OPT.ReadM LastFM.RetroPeriod
+parsePeriod = OPT.eitherReader $ \s -> case LastFM.parseRetroPeriod s of
     Just p -> Right p
     Nothing -> Left "Invalid period specified"
 

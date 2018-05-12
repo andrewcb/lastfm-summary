@@ -12,7 +12,7 @@ import Control.Applicative
 data Settings = Settings {
     lastUsername :: String,
     lastAPIKey :: String,
-    reportPeriod :: LastFM.TopArtistsPeriod,
+    reportPeriod :: LastFM.RetroPeriod,
     reportLimit :: Int
 }
 
