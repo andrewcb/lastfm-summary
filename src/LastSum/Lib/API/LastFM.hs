@@ -1,5 +1,9 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 module LastSum.Lib.API.LastFM 
 where
+
+--import LastSum.Lib.API.LastFM.Types
 
 data RetroPeriod = Overall | P7Day | P1Month | P3Month | P6Month | P12Month deriving (Eq)
 

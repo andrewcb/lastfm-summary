@@ -1,59 +1,30 @@
-{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings, DeriveGeneric, PatternSynonyms #-}
 
 module Main where
 
 import qualified LastSum.Lib.API.LastFM as LastFM
+import LastSum.Lib.API.LastFM.Parsing (ArtistRecord, pattern ArtistRecord, parseArtistsResponse)
 import qualified LastSum.Settings as Settings
 
 import Network.HTTP.Conduit (simpleHttp)
 import qualified Data.ByteString.Lazy as B
-import qualified Data.ConfigFile as CF
 import Data.Either.Utils
 import Data.String.Utils (replace)
 import Control.Monad.Except
 import Control.Monad.Trans.Maybe
 import Text.Read (readMaybe)
-import Data.Aeson
-import Data.Aeson.Types
 
 
--- JSON parsing
-
-data ArtistRecord = ArtistRecord {
-    name :: String,
-    playcount :: Int
-} deriving (Show)
-
---data TopArtistsResponse = 
-
---topArtistsResponse :: Value -> Parser [ArtistRecord]
-topArtistsResponse = withObject "topartists" $ \o -> do
-    p <- o .: "topartists"
-    artists <- p .: "artist"
-    return artists :: Parser [ArtistRecord]
-
-instance FromJSON ArtistRecord where
-    parseJSON = withObject "artistRecord" $ \o -> do
-        name <- o .: "name"
-        countStr <- o .: "playcount"
-        case readMaybe countStr :: Maybe Int of
-            Just c -> return $ ArtistRecord name c
-            Nothing -> fail "No well-formed playcount"
---
-
-makeReport :: String -> [ArtistRecord] -> String
-makeReport banner topArtists = banner ++ body
+makeTopArtistsReport :: String -> [ArtistRecord] -> String
+makeTopArtistsReport banner topArtists = banner ++ body
     where
         body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
         asString (ArtistRecord name count) = name ++ " (" ++ (show count) ++ ")"
 
-
-
-urlDataToReport :: String -> B.ByteString -> Maybe String
-urlDataToReport banner j = do
-    d <- decode j
-    ar <- parseMaybe topArtistsResponse d
-    return $ makeReport banner ar
+artistsURLDataToReport :: String -> B.ByteString -> Maybe String
+artistsURLDataToReport banner j = do
+    ar <- parseArtistsResponse j
+    return $ makeTopArtistsReport banner ar
 
 
 --  an attempt to reimplement main with maybeT
@@ -74,7 +45,7 @@ getReport settings spec = do
     --config <- MaybeT $ Config.getConfig
     let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest spec
     j <- liftIO $ simpleHttp url
-    MaybeT $ return $ urlDataToReport (specToBanner spec) j
+    MaybeT $ return $ artistsURLDataToReport (specToBanner spec) j
 
 -- 
 
