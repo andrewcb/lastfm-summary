@@ -3,48 +3,20 @@
 module Main where
 
 import qualified LastSum.Lib.API.LastFM as LastFM
-import qualified LastSum.Config as Config
+import qualified LastSum.Settings as Settings
 
 import Network.HTTP.Conduit (simpleHttp)
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ConfigFile as CF
 import Data.Either.Utils
 import Data.String.Utils (replace)
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Trans.Maybe
-import qualified Options.Applicative as OPT
-import Data.Semigroup ((<>))
-import System.Directory
+--import System.Directory
 import Text.Read (readMaybe) -- readMaybe
 import Data.Aeson
 import Data.Aeson.Types
 
--- command line options
-
-data CommandLineOptions = CommandLineOptions {
-    optPeriod :: LastFM.TopArtistsPeriod,
-    optLimit :: Int
-} deriving Show
-
-parsePeriod :: OPT.ReadM LastFM.TopArtistsPeriod
-parsePeriod = OPT.eitherReader $ \s -> case LastFM.parseTopArtistsPeriod s of
-    Just p -> Right p
-    Nothing -> Left "Invalid period specified"
-
-commandLineParser :: OPT.Parser CommandLineOptions
-commandLineParser = CommandLineOptions
-    <$> OPT.option parsePeriod  ( 
-        OPT.long "period" 
-        <> OPT.short 'p' 
-        <> OPT.help "period of report"
-        <> OPT.value LastFM.P7Day )
-    <*> OPT.option OPT.auto (
-        OPT.long "limit"
-        <> OPT.short 'l'
-        <> OPT.help "number of entries to list"
-        <> OPT.metavar "N"
-        <> OPT.value 5
-        <> OPT.showDefault )
 
 -- JSON parsing
 
@@ -88,31 +60,29 @@ urlDataToReport j = do
 
 --  an attempt to reimplement main with maybeT
 
+-- TODO: move username to here
 data ReportSpec = TopArtistsReport LastFM.TopArtistsPeriod Int
 
-specToRequest :: Config.Config -> ReportSpec -> LastFM.Request
-specToRequest config (TopArtistsReport p l) = LastFM.UserTopArtists (Config.lastUsername config) p l
+specFromSettings :: Settings.Settings -> ReportSpec
+specFromSettings settings = TopArtistsReport (Settings.reportPeriod settings) (Settings.reportLimit settings)
 
-getReport :: ReportSpec -> MaybeT IO String
-getReport spec = do
-    config <- MaybeT $ Config.getConfig
-    let url = LastFM.requestURL (Config.lastAPIKey config) $ specToRequest config spec
+specToRequest :: Settings.Settings -> ReportSpec -> LastFM.Request
+specToRequest settings (TopArtistsReport p l) = LastFM.UserTopArtists (Settings.lastUsername settings) p l
+
+getReport :: Settings.Settings -> ReportSpec -> MaybeT IO String
+getReport settings spec = do
+    --config <- MaybeT $ Config.getConfig
+    let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest settings spec
     j <- liftIO $ simpleHttp url
     MaybeT $ return $ urlDataToReport j
 
 -- 
 
-main' :: CommandLineOptions -> IO ()
-main' opts@(CommandLineOptions period limit) = do
-    --putStrLn $ show opts
-    let reportSpec = TopArtistsReport period limit
-    r <- runMaybeT $ getReport reportSpec
-    putStrLn $ maybe "Nothing to report" id r
-
 main :: IO ()
-main = main' =<< OPT.execParser opts
-    where
-        opts = OPT.info (commandLineParser OPT.<**> OPT.helper)
-            ( OPT.fullDesc 
-                <> OPT.progDesc "produce a report from last.fm user listening data"
-                <> OPT.header "lastfm-summary" )
+main = do
+    s <- Settings.getSettings
+    case s of 
+        Nothing -> putStrLn "No config file exists" -- FIXME
+        Just settings -> do
+            r <- runMaybeT $ getReport settings (specFromSettings settings)
+            putStrLn $ maybe "Nothing to report" id r
