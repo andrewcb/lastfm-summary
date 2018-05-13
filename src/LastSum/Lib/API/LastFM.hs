@@ -43,6 +43,7 @@ parseRetroPeriod _ = Nothing
 data Request = UserTopArtists { user :: String, period :: RetroPeriod, limit :: Int }
     | UserTopAlbums { user :: String, period :: RetroPeriod, limit :: Int }
     | UserTopTracks { user :: String, period :: RetroPeriod, limit :: Int }
+    | UserRecentTracks { user :: String, limit :: Int } -- TODO: add from/to timestamps
 
 apiBase = "http://ws.audioscrobbler.com/2.0/"
 
@@ -50,3 +51,4 @@ requestURL :: String -> Request -> String
 requestURL apiKey (UserTopArtists user period limit) = apiBase ++ "?method=user.gettopartists&user=" ++ user ++ "&api_key=" ++ apiKey ++ "&format=json&period=" ++ (show period) ++ "&limit=" ++ (show limit)
 requestURL apiKey (UserTopAlbums user period limit) = apiBase ++ "?method=user.gettopalbums&user=" ++ user ++ "&api_key=" ++ apiKey ++ "&format=json&period=" ++ (show period) ++ "&limit=" ++ (show limit)
 requestURL apiKey (UserTopTracks user period limit) = apiBase ++ "?method=user.gettoptracks&user=" ++ user ++ "&api_key=" ++ apiKey ++ "&format=json&period=" ++ (show period) ++ "&limit=" ++ (show limit)
+requestURL apiKey (UserRecentTracks user limit) = apiBase ++ "?method=user.getrecenttracks&user=" ++ user ++ "&api_key=" ++ apiKey ++ "&format=json&limit=" ++ (show limit)
