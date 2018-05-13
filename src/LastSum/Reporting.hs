@@ -5,7 +5,7 @@ where
 
 import qualified LastSum.Settings as Settings
 import qualified LastSum.Lib.API.LastFM as LastFM
-import LastSum.Lib.API.LastFM.Parsing (ArtistRecord, pattern ArtistRecord, parseArtistsResponse)
+import LastSum.Lib.API.LastFM.Parsing (ArtistPlayCount, pattern ArtistPlayCount, parseArtistsResponse)
 import Network.HTTP.Conduit (simpleHttp)
 import qualified Data.ByteString.Lazy as B
 import Data.Either.Utils
@@ -15,11 +15,11 @@ import Control.Monad.Trans.Maybe
 
 data ReportSpec = TopArtistsReport String LastFM.RetroPeriod Int
 
-makeTopArtistsReport :: String -> [ArtistRecord] -> String
+makeTopArtistsReport :: String -> [ArtistPlayCount] -> String
 makeTopArtistsReport banner topArtists = banner ++ body
     where
         body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
-        asString (ArtistRecord name count) = name ++ " (" ++ (show count) ++ ")"
+        asString (ArtistPlayCount name count) = name ++ " (" ++ (show count) ++ ")"
 
 artistsURLDataToReport :: String -> B.ByteString -> Maybe String
 artistsURLDataToReport banner j = do

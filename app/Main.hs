@@ -3,7 +3,7 @@
 module Main where
 
 import qualified LastSum.Lib.API.LastFM as LastFM
-import LastSum.Lib.API.LastFM.Parsing (ArtistRecord, pattern ArtistRecord, parseArtistsResponse)
+--import LastSum.Lib.API.LastFM.Parsing (ArtistPlayCount, pattern ArtistPlayCount, parseArtistsResponse)
 import qualified LastSum.Settings as Settings
 import qualified LastSum.Reporting as Reporting
 
