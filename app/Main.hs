@@ -22,5 +22,5 @@ main = do
     case s of 
         Left err -> putStrLn err
         Right settings -> do
-            r <- runMaybeT $ Reporting.getReport settings (specFromSettings settings)
+            r <- runMaybeT $ Reporting.getReport (Settings.lastAPIKey settings) (specFromSettings settings)
             putStrLn $ maybe "Nothing to report" id r

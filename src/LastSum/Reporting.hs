@@ -34,9 +34,10 @@ specToRequest (TopArtistsReport u p l) = LastFM.UserTopArtists u p l
 specToBanner :: ReportSpec -> String
 specToBanner (TopArtistsReport u p l) = "Top last.fm artists of " ++ LastFM.descriptiveName p ++ ": "
 
-getReport :: Settings.Settings -> ReportSpec -> MaybeT IO String
-getReport settings spec = do
+getReport :: String -> ReportSpec -> MaybeT IO String
+getReport apiKey spec = do
     --config <- MaybeT $ Config.getConfig
-    let url = LastFM.requestURL (Settings.lastAPIKey settings) $ specToRequest spec
+    let url = LastFM.requestURL apiKey $ specToRequest spec
     j <- liftIO $ simpleHttp url
-    MaybeT $ return $ artistsURLDataToReport (specToBanner spec) j
+    MaybeT $ return $ case spec of
+        TopArtistsReport _ _ _ -> artistsURLDataToReport (specToBanner spec) j
