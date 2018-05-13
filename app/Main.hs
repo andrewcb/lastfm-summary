@@ -16,6 +16,7 @@ import Text.Read (readMaybe)
 specFromSettings :: Settings.Settings -> Reporting.ReportSpec
 specFromSettings settings = Reporting.TopArtistsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)
 --specFromSettings settings = Reporting.TopAlbumsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)
+--specFromSettings settings = Reporting.RecentTracksReport (Settings.lastUsername settings) (Settings.reportLimit settings)
 
 main :: IO ()
 main = do
