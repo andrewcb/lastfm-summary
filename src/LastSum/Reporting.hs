@@ -5,7 +5,10 @@ where
 
 import qualified LastSum.Settings as Settings
 import qualified LastSum.Lib.API.LastFM as LastFM
-import LastSum.Lib.API.LastFM.Parsing (ArtistPlayCount, pattern ArtistPlayCount, parseArtistsResponse)
+import LastSum.Lib.API.LastFM.Parsing (
+    ArtistPlayCount, pattern ArtistPlayCount, 
+    ItemPlayCount, pattern ItemPlayCount, 
+    parseArtistsResponse, parseAlbumsResponse, parseTracksResponse)
 import Network.HTTP.Conduit (simpleHttp)
 import qualified Data.ByteString.Lazy as B
 import Data.Either.Utils
@@ -14,6 +17,8 @@ import Control.Monad.Trans.Maybe
 
 
 data ReportSpec = TopArtistsReport String LastFM.RetroPeriod Int
+    | TopAlbumsReport String LastFM.RetroPeriod Int
+    | TopTracksReport String LastFM.RetroPeriod Int
 
 makeTopArtistsReport :: String -> [ArtistPlayCount] -> String
 makeTopArtistsReport banner topArtists = banner ++ body
@@ -21,18 +26,37 @@ makeTopArtistsReport banner topArtists = banner ++ body
         body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
         asString (ArtistPlayCount name count) = name ++ " (" ++ (show count) ++ ")"
 
+makeTopItemsReport :: String -> [ItemPlayCount] -> String
+makeTopItemsReport banner topItems = banner ++ body
+    where
+        body = foldr1 (\a b -> a++", "++b) $ fmap asString topItems
+        asString (ItemPlayCount name artist count) = artist ++ " — " ++ name ++ " (" ++ (show count) ++ ")"
+
 artistsURLDataToReport :: String -> B.ByteString -> Maybe String
 artistsURLDataToReport banner j = do
     ar <- parseArtistsResponse j
     return $ makeTopArtistsReport banner ar
 
+albumsURLDataToReport :: String -> B.ByteString -> Maybe String
+albumsURLDataToReport banner j = do
+    ar <- parseAlbumsResponse j
+    return $ makeTopItemsReport banner ar
+
+tracksURLDataToReport :: String -> B.ByteString -> Maybe String
+tracksURLDataToReport banner j = do
+    ar <- parseTracksResponse j
+    return $ makeTopItemsReport banner ar
 
 
 specToRequest :: ReportSpec -> LastFM.Request
 specToRequest (TopArtistsReport u p l) = LastFM.UserTopArtists u p l
+specToRequest (TopAlbumsReport u p l) = LastFM.UserTopAlbums u p l
+specToRequest (TopTracksReport u p l) = LastFM.UserTopTracks u p l
 
 specToBanner :: ReportSpec -> String
 specToBanner (TopArtistsReport u p l) = "Top last.fm artists of " ++ LastFM.descriptiveName p ++ ": "
+specToBanner (TopAlbumsReport u p l) = "Top last.fm albums of " ++ LastFM.descriptiveName p ++ ": "
+specToBanner (TopTracksReport u p l) = "Top last.fm tracks of " ++ LastFM.descriptiveName p ++ ": "
 
 getReport :: String -> ReportSpec -> MaybeT IO String
 getReport apiKey spec = do
@@ -41,3 +65,5 @@ getReport apiKey spec = do
     j <- liftIO $ simpleHttp url
     MaybeT $ return $ case spec of
         TopArtistsReport _ _ _ -> artistsURLDataToReport (specToBanner spec) j
+        TopAlbumsReport _ _ _ -> albumsURLDataToReport (specToBanner spec) j
+        TopTracksReport _ _ _ -> tracksURLDataToReport (specToBanner spec) j
