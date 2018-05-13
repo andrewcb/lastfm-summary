@@ -13,7 +13,7 @@ import Text.Read (readMaybe)
 data ArtistRecord = ArtistRecord {
     name :: String,
     playcount :: Int
-} deriving (Show)
+} deriving (Eq, Show)
 
 topArtistsResponse = withObject "topartists" $ \o -> do
     p <- o .: "topartists"

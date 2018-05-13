@@ -56,3 +56,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - lastfm-summary
+    - hspec >= 1.8
+    - string-quote
