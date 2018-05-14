@@ -16,7 +16,8 @@ data ArtistPlayCount = ArtistPlayCount {
     artistPlays :: Int
 } deriving (Eq, Show)
 
-data ItemPlayCount = ItemPlayCount {
+-- a work of an artist; here, it encompasses tracks and albums
+data WorkPlayCount = WorkPlayCount {
     itemName :: String,
     itemArtistName :: String,
     itemPlays :: Int
@@ -39,14 +40,14 @@ instance FromJSON ArtistPlayCount where
             Just c -> return $ ArtistPlayCount name c
             Nothing -> fail "No well-formed playcount"
 
-instance FromJSON ItemPlayCount where
+instance FromJSON WorkPlayCount where
     parseJSON = withObject "itemRecord" $ \o -> do
         name <- o .: "name"
         artist <- o .: "artist"
         artistName <- artist .: "name"
         countStr <- o .: "playcount"
         case readMaybe countStr :: Maybe Int of
-            Just c -> return $ ItemPlayCount name artistName c
+            Just c -> return $ WorkPlayCount name artistName c
             Nothing -> fail "No well-formed playcount"
 
 instance FromJSON RecentTrack where
@@ -63,11 +64,11 @@ topArtistsResponse = withObject "topartists" $ \o -> do
     artists <- p .: "artist"
     return artists :: Parser [ArtistPlayCount]
 
-topItemsResponse :: String -> Value -> Parser [ItemPlayCount]
-topItemsResponse itemType = withObject subject $ \o -> do
+topWorksResponse :: String -> Value -> Parser [WorkPlayCount]
+topWorksResponse itemType = withObject subject $ \o -> do
     p <- o .: (T.pack subject)
     items <- p .: (T.pack itemType)
-    return items :: Parser [ItemPlayCount]
+    return items :: Parser [WorkPlayCount]
     where
         subject =  "top" ++ itemType ++ "s"
 
@@ -79,11 +80,11 @@ recentTracksResponse = withObject "recentTracks" $ \o -> do
 parseArtistsResponse :: B.ByteString -> Maybe [ArtistPlayCount]
 parseArtistsResponse j = decode j >>= parseMaybe topArtistsResponse
 
-parseAlbumsResponse :: B.ByteString -> Maybe [ItemPlayCount]
-parseAlbumsResponse j = decode j >>= (parseMaybe (topItemsResponse "album"))
+parseAlbumsResponse :: B.ByteString -> Maybe [WorkPlayCount]
+parseAlbumsResponse j = decode j >>= (parseMaybe (topWorksResponse "album"))
 
-parseTracksResponse :: B.ByteString -> Maybe [ItemPlayCount]
-parseTracksResponse j = decode j >>= (parseMaybe (topItemsResponse "track"))
+parseTracksResponse :: B.ByteString -> Maybe [WorkPlayCount]
+parseTracksResponse j = decode j >>= (parseMaybe (topWorksResponse "track"))
 
 parseRecentTracksResponse :: B.ByteString -> Maybe [RecentTrack]
 parseRecentTracksResponse j = decode j >>= parseMaybe recentTracksResponse

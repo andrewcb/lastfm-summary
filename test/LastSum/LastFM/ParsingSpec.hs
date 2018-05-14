@@ -23,12 +23,12 @@ spec = do
     describe "TopAlbumsResponse" $ do
         it "parses a Top Albums response JSON block" $ do
             let r = parseAlbumsResponse responseTopAlbums
-            r `shouldBe` Just [ItemPlayCount "Performer" "Montero" 187, ItemPlayCount "Pig City" "Tigercats" 50, ItemPlayCount "Earth Loop" "Moon Gangs" 48]
+            r `shouldBe` Just [WorkPlayCount "Performer" "Montero" 187, WorkPlayCount "Pig City" "Tigercats" 50, WorkPlayCount "Earth Loop" "Moon Gangs" 48]
 
     describe "TopTracksResponse" $ do
         it "parses a Top Tracks response JSON block" $ do
             let r = parseTracksResponse responseTopTracks
-            r `shouldBe` Just [ItemPlayCount "Aloha" "Montero" 31, ItemPlayCount "Caught Up in My Own World" "Montero" 27, ItemPlayCount "Montero Airlines" "Montero" 26]
+            r `shouldBe` Just [WorkPlayCount "Aloha" "Montero" 31, WorkPlayCount "Caught Up in My Own World" "Montero" 27, WorkPlayCount "Montero Airlines" "Montero" 26]
 
     describe "RecentTracksResponse" $ do
         it "parses a Recent Tracks response JSON block" $ do

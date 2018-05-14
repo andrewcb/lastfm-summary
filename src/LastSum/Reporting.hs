@@ -7,7 +7,7 @@ import qualified LastSum.Settings as Settings
 import qualified LastSum.Lib.API.LastFM as LastFM
 import LastSum.Lib.API.LastFM.Parsing (
     ArtistPlayCount, pattern ArtistPlayCount, 
-    ItemPlayCount, pattern ItemPlayCount, 
+    WorkPlayCount, pattern WorkPlayCount, 
     RecentTrack, pattern RecentTrack,
     parseArtistsResponse, parseAlbumsResponse, parseTracksResponse, parseRecentTracksResponse)
 import Network.HTTP.Conduit (simpleHttp)
@@ -22,43 +22,24 @@ data ReportSpec = TopArtistsReport String LastFM.RetroPeriod Int
     | TopTracksReport String LastFM.RetroPeriod Int
     | RecentTracksReport String Int
 
-makeTopArtistsReport :: String -> [ArtistPlayCount] -> String
-makeTopArtistsReport banner topArtists = banner ++ body
-    where
-        body = foldr1 (\a b -> a++", "++b) $ fmap asString topArtists
-        asString (ArtistPlayCount name count) = name ++ " (" ++ (show count) ++ ")"
+makeReportForItems :: String -> [a] -> (a -> String) -> String
+makeReportForItems banner items formatter = banner ++ (foldr1 (\a b -> a++", "++b) $ fmap formatter items)
 
-makeTopItemsReport :: String -> [ItemPlayCount] -> String
-makeTopItemsReport banner topItems = banner ++ body
-    where
-        body = foldr1 (\a b -> a++", "++b) $ fmap asString topItems
-        asString (ItemPlayCount name artist count) = artist ++ " — " ++ name ++ " (" ++ (show count) ++ ")"
-
-makeRecentTracksReport :: String -> [RecentTrack] -> String
-makeRecentTracksReport banner recentTracks = banner ++ body
-    where
-        body = foldr1 (\a b -> a++", "++b) $ fmap asString recentTracks
-        asString (RecentTrack name artist album) = artist ++ " — " ++ name 
+makeTopArtistsReport banner topArtists = makeReportForItems banner topArtists (\(ArtistPlayCount name count) -> name ++ " (" ++ (show count) ++ ")")
+makeTopWorksReport banner topItems = makeReportForItems banner topItems (\(WorkPlayCount name artist count) -> artist ++ " — " ++ name ++ " (" ++ (show count) ++ ")")
+makeRecentTracksReport banner recentTracks = makeReportForItems banner recentTracks (\(RecentTrack name artist album) -> artist ++ " — " ++ name)
 
 artistsURLDataToReport :: String -> B.ByteString -> Maybe String
-artistsURLDataToReport banner j = do
-    ar <- parseArtistsResponse j
-    return $ makeTopArtistsReport banner ar
+artistsURLDataToReport banner = fmap (makeTopArtistsReport banner) . parseArtistsResponse
 
 albumsURLDataToReport :: String -> B.ByteString -> Maybe String
-albumsURLDataToReport banner j = do
-    ar <- parseAlbumsResponse j
-    return $ makeTopItemsReport banner ar
+albumsURLDataToReport banner = fmap (makeTopWorksReport banner) . parseAlbumsResponse
 
 tracksURLDataToReport :: String -> B.ByteString -> Maybe String
-tracksURLDataToReport banner j = do
-    ar <- parseTracksResponse j
-    return $ makeTopItemsReport banner ar
+tracksURLDataToReport banner = fmap (makeTopWorksReport banner) . parseTracksResponse
 
 recentTracksURLDataToReport :: String -> B.ByteString -> Maybe String
-recentTracksURLDataToReport banner j = do
-    r <- parseRecentTracksResponse j
-    return $ makeRecentTracksReport banner r
+recentTracksURLDataToReport banner = fmap (makeRecentTracksReport banner) . parseRecentTracksResponse
 
 
 specToRequest :: ReportSpec -> LastFM.Request
@@ -77,8 +58,9 @@ getReport :: String -> ReportSpec -> MaybeT IO String
 getReport apiKey spec = do
     let url = LastFM.requestURL apiKey $ specToRequest spec
     j <- liftIO $ simpleHttp url
+    let banner = specToBanner spec
     MaybeT $ return $ case spec of
-        TopArtistsReport _ _ _ -> artistsURLDataToReport (specToBanner spec) j
-        TopAlbumsReport _ _ _ -> albumsURLDataToReport (specToBanner spec) j
-        TopTracksReport _ _ _ -> tracksURLDataToReport (specToBanner spec) j
-        RecentTracksReport _ _ -> recentTracksURLDataToReport (specToBanner spec) j
+        TopArtistsReport _ _ _ -> artistsURLDataToReport banner j
+        TopAlbumsReport _ _ _ -> albumsURLDataToReport banner j
+        TopTracksReport _ _ _ -> tracksURLDataToReport banner j
+        RecentTracksReport _ _ -> recentTracksURLDataToReport banner j
