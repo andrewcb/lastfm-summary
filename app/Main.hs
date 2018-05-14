@@ -2,6 +2,7 @@
 
 module Main where
 
+import LastSum.Types
 import qualified LastSum.Lib.API.LastFM as LastFM
 --import LastSum.Lib.API.LastFM.Parsing (ArtistPlayCount, pattern ArtistPlayCount, parseArtistsResponse)
 import qualified LastSum.Settings as Settings
@@ -14,9 +15,15 @@ import Text.Read (readMaybe)
 
 
 specFromSettings :: Settings.Settings -> Reporting.ReportSpec
-specFromSettings settings = Reporting.TopArtistsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)
---specFromSettings settings = Reporting.TopAlbumsReport (Settings.lastUsername settings) (Settings.reportPeriod settings) (Settings.reportLimit settings)
---specFromSettings settings = Reporting.RecentTracksReport (Settings.lastUsername settings) (Settings.reportLimit settings)
+specFromSettings settings = 
+    let lastUsername = (Settings.lastUsername settings)
+        period = (Settings.reportPeriod settings)
+        limit = (Settings.reportLimit settings)
+    in case (Settings.reportSubject settings) of
+        TopArtists -> Reporting.TopArtistsReport lastUsername period limit
+        TopAlbums -> Reporting.TopAlbumsReport lastUsername period limit
+        TopTracks -> Reporting.TopTracksReport lastUsername period limit
+        RecentTracks -> Reporting.RecentTracksReport lastUsername limit
 
 main :: IO ()
 main = do

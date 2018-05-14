@@ -1,6 +1,7 @@
 module LastSum.Settings
 where
 
+import LastSum.Types
 import qualified LastSum.Settings.ConfigFile as SF
 import qualified LastSum.Settings.CommandLine as SL
 import qualified LastSum.Lib.API.LastFM as LastFM
@@ -12,6 +13,7 @@ import Control.Applicative
 data Settings = Settings {
     lastUsername :: String,
     lastAPIKey :: String,
+    reportSubject :: ReportSubject,
     reportPeriod :: LastFM.RetroPeriod,
     reportLimit :: Int
 }
@@ -27,4 +29,4 @@ getSettings = do
     cl <- SL.getOptions
     return $ flip fmap eitherCF (\cf ->
         let lastUsername = SL.lastUsername cl ?? SF.lastUsername cf
-        in Settings lastUsername (SF.lastAPIKey cf) (SL.period cl) (SL.limit cl))
+        in Settings lastUsername (SF.lastAPIKey cf) (SL.subject cl) (SL.period cl) (SL.limit cl))

@@ -38,6 +38,8 @@ parseRetroPeriod ('1':'2':'m':_) = Just P12Month
 parseRetroPeriod ('1':'y':_) = Just P12Month
 parseRetroPeriod _ = Nothing
 
+retroPeriodNames = [ "week", "month", "3m", "6m", "12m", "overall" ]
+
 
 -- The request type
 data Request = UserTopArtists { user :: String, period :: RetroPeriod, limit :: Int }
